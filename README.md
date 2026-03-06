@@ -81,11 +81,6 @@ LLM_MODEL=gpt-4o-mini
 
 如果提示 `model not found`，请从你的平台文档复制准确的模型名。
 
-## Security
-
-- 不要把 `.env` 提交到 GitHub
-- 如果 key 泄露，请立即在平台后台重置
-
 ## License
 
 MIT
