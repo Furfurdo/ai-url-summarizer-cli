@@ -1,69 +1,91 @@
-# 文章链接总结工具（CLI）
+# URL Article Summarizer CLI
 
-这个工具做一件事：输入文章链接，输出摘要、关键观点、关键词。
+输入文章 URL，输出：
+- 摘要（Summary）
+- 关键观点（Key Points）
+- 关键词（Keywords）
 
-## 1. 安装
+适合快速阅读长文、做资料整理和选题调研。
+
+## Features
+
+- URL 抓取与正文提取
+- 文本清洗
+- 调用 OpenAI 兼容接口生成结构化总结
+- 命令行使用，开箱即用
+
+## Tech Stack
+
+- Python
+- requests
+- BeautifulSoup4
+- OpenAI Python SDK（兼容 OpenAI-style API）
+
+## Project Structure
+
+- `src/content_extractor.py`：抓取和正文提取
+- `src/summarizer.py`：调用模型并结构化输出
+- `src/cli.py`：命令行入口
+
+## Quick Start
+
+1. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 2. 配置
-
-先复制配置模板：
+2. 创建配置文件
 
 ```bash
 copy .env.example .env
 ```
 
-然后编辑 `.env`：
+3. 编辑 `.env`
 
 ```env
-LLM_API_KEY=你的平台key
-LLM_BASE_URL=你的兼容地址/v1
-LLM_MODEL=你的模型名
+LLM_API_KEY=your_key_here
+LLM_BASE_URL=https://your-provider.example/v1
+LLM_MODEL=gpt-4o-mini
 ```
 
 说明：
 - `LLM_API_KEY` 必填
-- `LLM_BASE_URL` 建议填写（Gemini、OpenRouter 等通常都要）
-- `LLM_MODEL` 必须是平台实际支持的模型名
+- `LLM_MODEL` 必填（必须是你平台支持的模型名）
+- `LLM_BASE_URL` 对多数第三方平台是必填
 
-兼容旧变量（可不改）：
+兼容旧变量（可选）：
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
 
-## 3. 运行
+4. 运行
 
 ```bash
-python src/cli.py "https://文章链接"
+python src/cli.py "https://example.com/article"
 ```
 
-限制关键观点数量：
+可选参数：
 
 ```bash
-python src/cli.py "https://文章链接" --max-points 6
+python src/cli.py "https://example.com/article" --max-points 6
 ```
 
-## 4. 模型示例（可直接抄）
-
-通用起步：
+## Model Examples
 
 ```env
 LLM_MODEL=gpt-4o-mini
+# LLM_MODEL=gpt-4.1-mini
+# LLM_MODEL=gemini-2.5-flash
 ```
 
-质量优先：
+如果提示 `model not found`，请从你的平台文档复制准确的模型名。
 
-```env
-LLM_MODEL=gpt-4.1-mini
-```
+## Security
 
-Gemini 常用：
+- 不要把 `.env` 提交到 GitHub
+- 如果 key 泄露，请立即在平台后台重置
 
-```env
-LLM_MODEL=gemini-2.5-flash
-```
+## License
 
-提示：如果报 `model not found`，去你平台文档里复制准确模型名覆盖即可。
+MIT
