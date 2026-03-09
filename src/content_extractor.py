@@ -1,4 +1,4 @@
-﻿import re
+import re
 from typing import Tuple
 
 import requests
@@ -13,8 +13,18 @@ def fetch_html(url: str, timeout: int = 20) -> str:
             "Chrome/122.0.0.0 Safari/537.36"
         )
     }
-    response = requests.get(url, headers=headers, timeout=timeout)
-    response.raise_for_status()
+
+    try:
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+    except requests.exceptions.Timeout as exc:
+        raise ValueError("网页请求超时，请稍后重试。") from exc
+    except requests.exceptions.HTTPError as exc:
+        status = exc.response.status_code if exc.response is not None else "unknown"
+        raise ValueError(f"网页访问失败（HTTP {status}），请确认链接可公开访问。") from exc
+    except requests.exceptions.RequestException as exc:
+        raise ValueError("无法访问该链接，请检查网络或链接是否正确。") from exc
+
     response.encoding = response.apparent_encoding
     return response.text
 
