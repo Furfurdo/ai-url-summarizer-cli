@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
@@ -7,6 +8,14 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
+
+
+TEMPLATE_INSTRUCTIONS = {
+    "general": "Use a balanced style for broad readers.",
+    "study": "Focus on definitions, concepts, and learnable takeaways.",
+    "creator": "Focus on content angles, hooks, and practical storytelling points.",
+    "research": "Focus on methods, claims, evidence quality, and limitations.",
+}
 
 
 @dataclass
@@ -73,20 +82,71 @@ def _normalize_list(value: Any, max_items: int) -> List[str]:
     return normalized
 
 
+def _split_sentences(text: str) -> List[str]:
+    raw = re.split(r"(?<=[。！？!?；;])\s+|\n+", text)
+    sentences = [s.strip() for s in raw if s and s.strip()]
+    return [s for s in sentences if len(s) >= 15]
+
+
+def _tokenize(text: str) -> List[str]:
+    return re.findall(r"[A-Za-z0-9_]+|[\u4e00-\u9fff]", text.lower())
+
+
+def _best_evidence_for_point(point: str, sentences: List[str]) -> str:
+    point_tokens = set(_tokenize(point))
+    if not point_tokens:
+        return sentences[0] if sentences else ""
+
+    best_sentence = ""
+    best_score = 0.0
+    for sentence in sentences:
+        sentence_tokens = set(_tokenize(sentence))
+        if not sentence_tokens:
+            continue
+        overlap = point_tokens.intersection(sentence_tokens)
+        score = len(overlap) / max(1, len(point_tokens))
+        if score > best_score:
+            best_score = score
+            best_sentence = sentence
+
+    if best_sentence:
+        return best_sentence
+    return sentences[0] if sentences else ""
+
+
+def _build_key_point_items(key_points: List[str], text: str) -> List[Dict[str, str]]:
+    sentences = _split_sentences(text)
+    items: List[Dict[str, str]] = []
+    for idx, point in enumerate(key_points, start=1):
+        evidence = _best_evidence_for_point(point, sentences)
+        evidence = evidence[:220].strip() if evidence else "未匹配到可引用片段。"
+        items.append(
+            {
+                "index": str(idx),
+                "point": point,
+                "evidence": evidence,
+            }
+        )
+    return items
+
+
 def summarize_text(
     text: str,
     title: str = "",
     max_points: int = 5,
     max_keywords: int = 8,
     language: str = "zh",
+    summary_template: str = "general",
+    include_evidence: bool = True,
 ) -> Dict[str, Any]:
     settings = load_runtime_settings()
     client = OpenAI(api_key=settings.api_key, base_url=settings.base_url or None)
 
     output_lang = "Chinese" if language.lower().startswith("zh") else "English"
-    system_prompt = (
-        "You are a precise article analyst. Return JSON only without markdown code fences."
-    )
+    template_key = summary_template if summary_template in TEMPLATE_INSTRUCTIONS else "general"
+    template_instruction = TEMPLATE_INSTRUCTIONS[template_key]
+
+    system_prompt = "Return valid JSON only. Do not include markdown code fences."
     user_prompt = (
         f"Summarize this article in {output_lang} and return JSON with keys:\n"
         "{\n"
@@ -96,7 +156,8 @@ def summarize_text(
         "}\n"
         f"Rules:\n- key_points length <= {max_points}\n"
         f"- keywords length <= {max_keywords}\n"
-        "- Focus on factual and core ideas only\n\n"
+        "- Focus on factual and core ideas only\n"
+        f"- Style instruction: {template_instruction}\n\n"
         f"Title: {title or 'N/A'}\n"
         f"Content:\n{text}"
     )
@@ -136,9 +197,13 @@ def summarize_text(
     if not keywords:
         keywords = ["待补充"]
 
+    key_point_items = _build_key_point_items(key_points, text) if include_evidence else []
+
     return {
         "summary": summary,
         "key_points": key_points,
+        "key_point_items": key_point_items,
         "keywords": keywords,
         "model": settings.model,
+        "template": template_key,
     }
