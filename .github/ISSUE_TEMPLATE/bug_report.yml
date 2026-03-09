@@ -1,0 +1,40 @@
+name: Bug Report
+description: 提交一个可复现的问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: desc
+    attributes:
+      label: 问题描述
+      description: 具体描述出现了什么问题
+      placeholder: 例如：web 端点击生成后报错...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 尽量写出最小复现步骤
+      placeholder: |
+        1. 执行...
+        2. 输入...
+        3. 看到报错...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+      placeholder: 例如：应正常输出摘要
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图
+      description: 如有命令行报错，请粘贴完整信息
+      render: shell

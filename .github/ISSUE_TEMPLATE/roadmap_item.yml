@@ -1,0 +1,54 @@
+name: Roadmap Item
+description: 创建一个产品路线图条目
+title: "[Roadmap] "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: goal
+    attributes:
+      label: 目标
+      placeholder: 例如：让非技术用户 1 分钟完成第一次总结
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 背景问题
+      description: 当前用户遇到的问题是什么
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围
+      description: 这次具体做什么，不做什么
+      placeholder: |
+        做：
+        - ...
+        不做：
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: 验收标准（DoD）
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true

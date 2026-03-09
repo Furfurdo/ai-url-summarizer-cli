@@ -5,7 +5,16 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    OpenAI,
+    RateLimitError,
+)
 
 load_dotenv()
 
@@ -140,7 +149,7 @@ def summarize_text(
     include_evidence: bool = True,
 ) -> Dict[str, Any]:
     settings = load_runtime_settings()
-    client = OpenAI(api_key=settings.api_key, base_url=settings.base_url or None)
+    client = OpenAI(api_key=settings.api_key, base_url=settings.base_url or None, timeout=60.0)
 
     output_lang = "Chinese" if language.lower().startswith("zh") else "English"
     template_key = summary_template if summary_template in TEMPLATE_INSTRUCTIONS else "general"
@@ -163,25 +172,39 @@ def summarize_text(
     )
 
     try:
-        completion = client.chat.completions.create(
-            model=settings.model,
-            temperature=0.2,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-    except Exception:
-        # Some OpenAI-compatible gateways do not support response_format.
-        completion = client.chat.completions.create(
-            model=settings.model,
-            temperature=0.2,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
+        try:
+            completion = client.chat.completions.create(
+                model=settings.model,
+                temperature=0.2,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+        except BadRequestError:
+            # Some OpenAI-compatible gateways do not support response_format.
+            completion = client.chat.completions.create(
+                model=settings.model,
+                temperature=0.2,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+    except (APIConnectionError, APITimeoutError) as exc:
+        raise ValueError(
+            "无法连接到模型服务。请检查：1) Base URL 是否正确；2) 本机网络是否可访问该地址；"
+            f"3) 当前模型服务是否可用。当前 Base URL: {settings.base_url or '默认官方地址'}。"
+        ) from exc
+    except AuthenticationError as exc:
+        raise ValueError("鉴权失败，请检查 API Key 是否有效、是否有权限访问该模型。") from exc
+    except NotFoundError as exc:
+        raise ValueError(f"模型不存在或不可用：{settings.model}。请更换为平台支持的模型名。") from exc
+    except RateLimitError as exc:
+        raise ValueError("调用频率超限或余额不足，请稍后重试或检查账号额度。") from exc
+    except APIStatusError as exc:
+        raise ValueError(f"模型服务返回异常状态（HTTP {exc.status_code}）。请稍后重试。") from exc
 
     content = completion.choices[0].message.content or ""
     parsed = _extract_json_object(content)

@@ -1,0 +1,45 @@
+<svg width="1200" height="740" viewBox="0 0 1200 740" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7ed"/>
+      <stop offset="100%" stop-color="#fffbeb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="740" fill="url(#bg2)"/>
+  <rect x="40" y="36" width="1120" height="668" rx="18" fill="#ffffff" stroke="#f0dcc7"/>
+  <rect x="72" y="72" width="1056" height="612" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+
+  <text x="95" y="112" font-size="28" font-family="Segoe UI, Arial" fill="#0f172a" font-weight="700">发布渠道草稿预览</text>
+  <text x="95" y="138" font-size="15" font-family="Segoe UI, Arial" fill="#64748b">同一篇文章，自动生成不同平台可用结构</text>
+
+  <rect x="95" y="166" width="210" height="36" rx="18" fill="#0f766e"/>
+  <text x="200" y="189" text-anchor="middle" font-size="14" font-family="Segoe UI, Arial" fill="#ffffff" font-weight="600">小红书</text>
+  <rect x="315" y="166" width="210" height="36" rx="18" fill="#155e75"/>
+  <text x="420" y="189" text-anchor="middle" font-size="14" font-family="Segoe UI, Arial" fill="#ffffff" font-weight="600">公众号</text>
+  <rect x="535" y="166" width="210" height="36" rx="18" fill="#334155"/>
+  <text x="640" y="189" text-anchor="middle" font-size="14" font-family="Segoe UI, Arial" fill="#ffffff" font-weight="600">推文 Thread</text>
+
+  <rect x="95" y="222" width="320" height="430" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="112" y="252" font-size="16" font-family="Segoe UI, Arial" fill="#111827" font-weight="700">小红书稿</text>
+  <text x="112" y="280" font-size="13" font-family="Segoe UI, Arial" fill="#475569">标题备选</text>
+  <text x="112" y="304" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">1) ...</text>
+  <text x="112" y="326" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">2) ...</text>
+  <text x="112" y="348" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">3) ...</text>
+  <text x="112" y="384" font-size="13" font-family="Segoe UI, Arial" fill="#475569">正文 + 互动引导 + 标签</text>
+
+  <rect x="440" y="222" width="320" height="430" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="457" y="252" font-size="16" font-family="Segoe UI, Arial" fill="#111827" font-weight="700">公众号稿</text>
+  <text x="457" y="280" font-size="13" font-family="Segoe UI, Arial" fill="#475569">标题建议 + 导语</text>
+  <text x="457" y="304" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">小节 1 ...</text>
+  <text x="457" y="326" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">小节 2 ...</text>
+  <text x="457" y="348" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">小节 3 ...</text>
+  <text x="457" y="384" font-size="13" font-family="Segoe UI, Arial" fill="#475569">结尾建议 + 参考链接</text>
+
+  <rect x="785" y="222" width="320" height="430" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="802" y="252" font-size="16" font-family="Segoe UI, Arial" fill="#111827" font-weight="700">推文 Thread</text>
+  <text x="802" y="280" font-size="13" font-family="Segoe UI, Arial" fill="#475569">Tweet 1/3 一句话结论</text>
+  <text x="802" y="304" font-size="13" font-family="Segoe UI, Arial" fill="#475569">Tweet 2/3 核心观点</text>
+  <text x="802" y="328" font-size="13" font-family="Segoe UI, Arial" fill="#475569">Tweet 3/3 原文链接 + 标签</text>
+
+  <text x="95" y="698" font-size="12" font-family="Segoe UI, Arial" fill="#64748b">Preview mockup for README showcase</text>
+</svg>

@@ -7,8 +7,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from content_extractor import extract_article_text
+from publish_adapter import CHANNEL_CHOICES, build_channel_draft
 from summarizer import load_runtime_settings, summarize_text
-
 
 TEMPLATE_CHOICES = ["general", "study", "creator", "research"]
 FORMAT_CHOICES = ["text", "json", "markdown"]
@@ -93,6 +93,8 @@ def _summarize_single_url(url: str, args: argparse.Namespace) -> dict:
         "keywords": result["keywords"],
         "model": result["model"],
         "template": result["template"],
+        "channel": args.channel,
+        "channel_draft": build_channel_draft(args.channel, result={"title": title, **result}, url=url),
     }
 
 
@@ -126,6 +128,15 @@ def _build_text_output(result: dict) -> str:
             f"模型: {result['model']}",
         ]
     )
+    channel_draft = str(result.get("channel_draft", "")).strip()
+    if channel_draft:
+        lines.extend(
+            [
+                "",
+                f"=== 渠道文案（{result.get('channel', 'none')}）===",
+                channel_draft,
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -160,6 +171,18 @@ def _build_markdown_output(result: dict) -> str:
         "",
     ]
     lines.extend(_build_markdown_sections(result, level="##"))
+    channel_draft = str(result.get("channel_draft", "")).strip()
+    if channel_draft:
+        lines.extend(
+            [
+                "",
+                f"## 发布渠道文案（{result.get('channel', 'none')}）",
+                "",
+                "```text",
+                channel_draft,
+                "```",
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -201,8 +224,21 @@ def _build_batch_markdown_output(results: list[dict]) -> str:
         lines.append(f"- 来源: {item['url']}")
         lines.append(f"- 模型: {item['model']}")
         lines.append(f"- 模板: {item.get('template', 'general')}")
+        lines.append(f"- 渠道: {item.get('channel', 'none')}")
         lines.append("")
         lines.extend(_build_markdown_sections(item, level="###"))
+        channel_draft = str(item.get("channel_draft", "")).strip()
+        if channel_draft:
+            lines.extend(
+                [
+                    "",
+                    "### 发布渠道文案",
+                    "",
+                    "```text",
+                    channel_draft,
+                    "```",
+                ]
+            )
         lines.append("")
     return "\n".join(lines).strip() + "\n"
 
@@ -340,6 +376,19 @@ def run_batch(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_web(host: str = "127.0.0.1", port: int = 7860) -> int:
+    try:
+        from web_app import create_app
+    except Exception as exc:
+        print(f"网页端启动失败：{exc}")
+        return 1
+
+    print(f"网页端已启动，请在浏览器打开：http://{host}:{port}")
+    app = create_app()
+    app.run(host=host, port=port, debug=False)
+    return 0
+
+
 def _ask_choice(title: str, options: list[str], default_idx: int = 0) -> str:
     print(title)
     for idx, option in enumerate(options, start=1):
@@ -370,8 +419,9 @@ def _interactive_mode() -> int:
         print("1. 首次配置或更新配置")
         print("2. 总结一篇文章（粘贴链接）")
         print("3. 批量总结（读取 txt/csv 文件）")
-        print("4. 查看示例文件路径")
-        print("5. 退出")
+        print("4. 启动网页端")
+        print("5. 查看示例文件路径")
+        print("6. 退出")
 
         action = input("输入编号并回车: ").strip()
 
@@ -401,6 +451,7 @@ def _interactive_mode() -> int:
                 max_keywords=8,
                 lang="zh",
                 template=template,
+                channel=_ask_choice("选择发布渠道：", CHANNEL_CHOICES, default_idx=0),
                 format=out_format,
                 max_chars=12000,
                 no_evidence=False,
@@ -427,6 +478,7 @@ def _interactive_mode() -> int:
                 max_keywords=8,
                 lang="zh",
                 template=template,
+                channel=_ask_choice("选择发布渠道：", CHANNEL_CHOICES, default_idx=0),
                 format=out_format,
                 max_chars=12000,
                 no_evidence=False,
@@ -436,15 +488,19 @@ def _interactive_mode() -> int:
             continue
 
         if action == "4":
+            run_web(host="127.0.0.1", port=7860)
+            continue
+
+        if action == "5":
             print("示例文本: examples/urls.txt")
             print("示例表格: examples/urls_template.csv")
             continue
 
-        if action == "5":
+        if action == "6":
             print("已退出。")
             return 0
 
-        print("无效选项，请输入 1-5。")
+        print("无效选项，请输入 1-6。")
 
 
 def _add_common_options(parser: argparse.ArgumentParser) -> None:
@@ -461,6 +517,12 @@ def _add_common_options(parser: argparse.ArgumentParser) -> None:
         choices=TEMPLATE_CHOICES,
         default="general",
         help="总结模板：general/study/creator/research",
+    )
+    parser.add_argument(
+        "--channel",
+        choices=CHANNEL_CHOICES,
+        default="none",
+        help="发布渠道文案：none/xiaohongshu/wechat/tweet",
     )
     parser.add_argument(
         "--format",
@@ -503,6 +565,10 @@ def build_parser() -> argparse.ArgumentParser:
     batch_parser.add_argument("input", help="输入文件路径（.txt 或 .csv）")
     _add_common_options(batch_parser)
 
+    web_parser = subparsers.add_parser("web", help="启动网页端")
+    web_parser.add_argument("--host", default="127.0.0.1")
+    web_parser.add_argument("--port", type=int, default=7860)
+
     return parser
 
 
@@ -511,7 +577,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         return argv
 
     first = argv[1]
-    known = {"setup", "summarize", "batch", "-h", "--help"}
+    known = {"setup", "summarize", "batch", "web", "-h", "--help"}
     if first in known:
         return argv
 
@@ -540,6 +606,9 @@ def main() -> int:
 
     if args.command == "batch":
         return run_batch(args)
+
+    if args.command == "web":
+        return run_web(host=args.host, port=args.port)
 
     parser.print_help()
     return 0
